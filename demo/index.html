@@ -1,0 +1,109 @@
+<!DOCTYPE>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="x-ua-compatible" content="edge">
+	<title>LocationObserver Demo</title>
+</head>
+<body>
+	<h1>LocationObserver Demo</h1>
+	<p>Manually change the hash in the browser's location bar.</p>
+	<p>This page contains two instances of LocationObserver: One using a JSON parser, and the other using a simple query string parser.</p>
+	<h2>JSON Parser</h2>
+	<ul>
+		<li><a href='#{}'>An empty object: #{}</a></li>
+		<li><a href='#{"id":123}'>A simple object: #{"id":123}</a></li>
+		<li><a href='#{"product":{"id":123,"title":"Bean Bag Chair"}}'>Complex object: #{"product":{"id":123,"title":"Bean Bag Chair"}}</a></li>
+		<li><a href='#{foo: "}'>Malformed JSON: #{foo: "}</a></li>
+		<li><a href='#not_json'>A normal anchor: #not_json</a></li>
+		<li><a href='#'>An empty value: #</a></li>
+	</ul>
+
+	<h2>Simple Query String Parser</h2>
+	<ul>
+		<li><a href="#">An empty query string: #</a></li>
+		<li><a href="#id=123&amp;title=Just%20Testing">A simple example: #id=123&amp;title=Just%20Testing</a></li>
+		<li><a href="#blog[id]=123&amp;blog[title]=Just%20Testing">Complex keys: #blog[id]=123&amp;blog[title]=Just%20Testing</a></li>
+		<li><a href="#not_query_string">A normal anchor: #not_query_string</a></li>
+	</ul>
+
+	<p><strong>Be sure to open your browser's debugging tools.</strong></p>
+	<script type="text/javascript" src="../src/location_observer.js"></script>
+	<script type="text/javascript" src="../src/location_observer/json_parser.js"></script>
+	<script type="text/javascript" src="../src/location_observer/simple_query_string_parser.js"></script>
+	<script type="text/javascript">
+
+		function Application(name) {
+			this.name = name;
+		}
+
+		Application.prototype = {
+
+			hashParser: null,
+
+			logger: window.console || null,
+
+			name: null,
+
+			observer: null,
+
+			constructor: Application,
+
+			init: function() {
+				// 2: Make this application the global error handler
+				LocationObserver.errorHandler = this;
+
+				// 3: Instantiate the location observer
+				this.observer = new LocationObserver();
+
+				// 4: Subscribe to the observer
+				this.observer.subscribe(this, "handleHashChanged");
+
+				// 5: Optionally add a hash parser
+				this.observer.parser = this.hashParser;
+
+				// 6: Init the observer, which will trigger the hash changed event
+				//    if the current page has a hash.
+				this.observer.init(window);
+			},
+
+			handleError: function(error) {
+				if (this.logger.error) {
+					this.logger.error(this.name + " - handleError");
+					this.logger.error(error);
+					return true;
+				}
+				else {
+					return false;
+				}
+			},
+
+			handleHashChanged: function(data, hash) {
+				this.logger.info(this.name + " - Hash changed!");
+
+				var x = {
+					hash: hash,
+					data: data
+				};
+
+				if (this.logger.dir) {
+					this.logger.dir(x);
+				}
+				else {
+					this.logger.log(x);
+				}
+			}
+		};
+
+		// 1: Kick start the demo.
+		var app1 = new Application("json_parser");
+		app1.hashParser = new LocationObserver.JsonParser();
+		app1.init();
+
+		var app2 = new Application("query_string_parser");
+		app2.hashParser = new LocationObserver.SimpleQueryStringParser();
+		app2.init();
+
+	</script>
+</body>
+</html>
